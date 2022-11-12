@@ -24,11 +24,6 @@ vram_palette = $1fa00
 
 .segment "DATA"
 
-irq_line_counter:	.byte 0
-raster_low:			.byte $20, $40, $60, $80, $A0, $B0, $C0, $D0, 0
-raster_hi:			.byte 0, 0, 0, 0, $0, $0, $0, $0, $0
-hscales:			.byte 128, 120, 112, 104, 96, 88, 80, 72, 72
-
 next_line_lo:		.res 1
 next_line_hi:		.res 1
 scale:				.res 1
@@ -147,7 +142,7 @@ handle_irq:
 	; check for VSYNC
 	lda veraisr
 	and #$02
-	beq :+
+	beq @vsync
 
 	; line IRQ
 
@@ -156,23 +151,38 @@ handle_irq:
 
 	jsr set_scale
 
-	lda raster_low,x
+	; lda raster_low,x
+	lda next_line_lo
 	sta verairqlo
 
 	lda veraien
 	and #$7f
-	ora raster_hi,x
+	ora next_line_hi
 	sta veraien
 
-	inc irq_line_counter
+	sec
+	lda scale
+	sbc #1
+	sta scale
+	
+	clc
+	lda next_line_lo
+	adc #$04
+	sta next_line_lo
+	bcc :+
+	lda #$80
+	sta next_line_hi
+:
 
+@return_interrupt:
 	; return from the IRQ manually
 	ply
 	plx
 	pla
 	rti
 	; end of line IRQ
-:
+
+@vsync:
 	lda veraisr
 	and #$01
 
@@ -192,9 +202,22 @@ check_vsync:
 	beq @end
 
 	; VSYNC has occurred, handle
-	jsr set_scale
 	
-	stz irq_line_counter
+	stz next_line_hi
+
+	lda #$0a
+	sta next_line_lo
+	lda #04
+	sta verairqlo
+
+	lda veraien
+	and #$7f
+	sta veraien
+
+	lda #128
+	sta scale
+
+	stz veral0hscrolllo
 
 	jsr tick
 
@@ -215,10 +238,11 @@ set_scale:
 	lda #0
 	sta veractl
 
-	ldx irq_line_counter
-	lda hscales,x
+	lda scale
 	sta veradchscale
-	sta veradcvscale
+
+	inc veral0hscrolllo
+	inc veral0hscrolllo
 
 	; un-stash veractl
 	sty veractl
@@ -231,6 +255,16 @@ set_scale:
 tick:
 
 	dec veral0vscrolllo	
+	lda veral0vscrolllo
+	cmp #$ff
+	bne :+
+	dec veral0vscrollhi
+:
+
+	; inc veral0hscrolllo	
+	; bne :+
+	; inc veral0hscrollhi
+; :
 
 	rts
 
