@@ -15,12 +15,18 @@ end_tilefile:
 mapfile: .literal "MAP.BIN"
 end_mapfile:
 
+skyfile: .literal "SKY.BIN"
+end_skyfile:
+
 palettefile: .literal "PAL.BIN"
 end_palettefile:
 
 vram_tilebase = $00000
 vram_mapbase = $10000
+vram_skybase = $10800
 vram_palette = $1fa00
+
+horizon = $74
 
 .segment "DATA"
 
@@ -33,7 +39,7 @@ scale:				.res 1
 main:
 
 	; set video mode
-	lda #%00010001		; l0 enabled
+	lda #%00110001		; l0 enabled
 	sta veradcvideo
 
 	; set the l0 tile mode	
@@ -43,14 +49,20 @@ main:
 					; bitmap mode - 0
 					; color depth (2-bits) - 2 (4bpp)
 	sta veral0config
+	sta veral1config
 
 	lda #(<(vram_tilebase >> 9) | (1 << 1) | 1)
 								;  height    |  width
 	sta veral0tilebase
+	sta veral1tilebase
 
 	; set the tile map base address
 	lda #<(vram_mapbase >> 9)
 	sta veral0mapbase
+
+	; set the tile map base address
+	lda #<(vram_skybase >> 9)
+	sta veral1mapbase
 
 	lda #1
 	ldx #8
@@ -82,6 +94,19 @@ main:
 	ldx #8
 	ldy #0
 	jsr SETLFS
+	lda #(end_skyfile-skyfile)
+	ldx #<skyfile
+	ldy #>skyfile
+	jsr SETNAM
+	lda #(^vram_skybase + 2)
+	ldx #<vram_skybase
+	ldy #>vram_skybase
+	jsr LOAD
+
+	lda #1
+	ldx #8
+	ldy #0
+	jsr SETLFS
 	lda #(end_palettefile-palettefile)
 	ldx #<palettefile
 	ldy #>palettefile
@@ -97,7 +122,7 @@ main:
 	lda #$05
 	sta verairqlo
 
-	lda #$0a
+	lda #horizon
 	sta next_line_lo
 	lda #$0
 	sta next_line_hi
@@ -149,32 +174,8 @@ handle_irq:
 	; acknowledge line IRQ
 	sta veraisr
 
-	jsr set_scale
+	jsr raster_line
 
-	; lda raster_low,x
-	lda next_line_lo
-	sta verairqlo
-
-	lda veraien
-	and #$7f
-	ora next_line_hi
-	sta veraien
-
-	sec
-	lda scale
-	sbc #1
-	sta scale
-	
-	clc
-	lda next_line_lo
-	adc #$04
-	sta next_line_lo
-	bcc :+
-	lda #$80
-	sta next_line_hi
-:
-
-@return_interrupt:
 	; return from the IRQ manually
 	ply
 	plx
@@ -195,6 +196,38 @@ handle_irq:
 	jmp (default_irq)
 
 ;==================================================
+; raster_line
+;==================================================
+raster_line:
+
+	jsr set_scale
+
+	; lda raster_low,x
+	lda next_line_lo
+	sta verairqlo
+
+	lda veraien
+	and #$7f
+	ora next_line_hi
+	sta veraien
+
+	sec
+	lda scale
+	sbc #1
+	sta scale
+	
+	clc
+	lda next_line_lo
+	adc #$04
+	sta next_line_lo
+	bcc @return
+	lda #$80
+	sta next_line_hi
+
+@return:
+	rts
+
+;==================================================
 ; check_vsync
 ;==================================================
 check_vsync:
@@ -205,9 +238,9 @@ check_vsync:
 	
 	stz next_line_hi
 
-	lda #$0a
+	lda #horizon
 	sta next_line_lo
-	lda #04
+	lda #$04
 	sta verairqlo
 
 	lda veraien
@@ -241,6 +274,17 @@ set_scale:
 	lda scale
 	sta veradchscale
 
+	sec
+	lda #128
+	sbc scale
+	lsr
+	asl
+	lsr
+	sta u0L
+	lda #128
+	sbc u0L
+	sta veradcvscale
+
 	inc veral0hscrolllo
 	inc veral0hscrolllo
 
@@ -254,10 +298,14 @@ set_scale:
 ;==================================================
 tick:
 
-	dec veral0vscrolllo	
+	; dec veral0vscrolllo	
 	lda veral0vscrolllo
-	cmp #$ff
-	bne :+
+	sec
+	sbc #2
+	sta veral0vscrolllo
+	; lda veral0vscrolllo
+	; cmp #$ff
+	bcs :+
 	dec veral0vscrollhi
 :
 
