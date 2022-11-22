@@ -38,6 +38,7 @@ next_line_lo:		.res 1
 next_line_hi:		.res 1
 scale:				.res 1
 ticks:				.res 1
+vscroll:			.res 2
 
 .segment "CODE"
 
@@ -309,11 +310,11 @@ check_vsync:
 	stz veral0hscrolllo
 	stz veral1hscrolllo
 
-	jsr tick
-
 	; set video mode
 	lda #%00110001		; l0 and l1 enabled
 	sta veradcvideo
+
+	jsr tick
 
 @end:
 	stz zp_vsync_trig
@@ -346,6 +347,17 @@ set_scale:
 	sbc u0L
 	sta veradcvscale
 
+	asl u0L
+	asl u0L
+
+	clc
+	lda vscroll
+	adc u0L
+	sta veral0vscrolllo
+	lda vscroll+1
+	adc #0
+	sta veral0vscrollhi
+
 	; un-stash veractl
 	sty veractl
 
@@ -360,16 +372,17 @@ tick:
 	lsr
 	bcc :+
 
-	; dec veral0vscrolllo	
-	lda veral0vscrolllo
+	lda vscroll
 	sec
-	sbc #2
-	sta veral0vscrolllo
-	; lda veral0vscrolllo
-	; cmp #$ff
+	sbc #4
+	sta vscroll
 	bcs :+
-	dec veral0vscrollhi
+	dec vscroll+1
 :
+	lda vscroll
+	sta veral0vscrolllo
+	lda vscroll+1
+	sta veral0vscrollhi
 
 	inc ticks
 
