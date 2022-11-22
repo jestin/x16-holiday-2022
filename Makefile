@@ -11,8 +11,9 @@ SOURCES = $(MAIN) \
 
 RESOURCES = TILES.BIN \
 			MAP.BIN \
+			PAL.BIN \
 			SKY.BIN \
-			PAL.BIN
+			SKYPAL.BIN
 
 all: $(PROG)
 
@@ -23,11 +24,17 @@ TILES.BIN: tiles.xcf
 MAP.BIN: map.tmx
 	tmx2vera map.tmx -l terrain MAP.BIN -d
 
-SKY.BIN: map.tmx
-	tmx2vera map.tmx -l sky SKY.BIN -d
+# SKY.BIN: map.tmx
+# 	tmx2vera map.tmx -l sky SKY.BIN -d
 
 PAL.BIN: TILES.BIN
 	cp TILES.BIN.PAL PAL.BIN
+
+SKY.BIN: sky.xcf
+	gimp -i -d -f -b '(export-vera "sky.xcf" "SKY.BIN" 1 4 8 8 0 1 1)' -b '(gimp-quit 0)'
+
+SKYPAL.BIN: SKY.BIN
+	cp SKY.BIN.PAL SKYPAL.BIN
 
 resources: $(RESOURCES)
 

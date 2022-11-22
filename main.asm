@@ -21,25 +21,30 @@ end_skyfile:
 palettefile: .literal "PAL.BIN"
 end_palettefile:
 
-vram_tilebase = $00000
-vram_mapbase = $10000
-vram_skybase = $10800
-vram_palette = $1fa00
+skypalettefile: .literal "SKYPAL.BIN"
+end_skypalettefile:
 
-horizon = $74
+vram_tilebase = $10000
+vram_mapbase = $17000
+vram_skybase = $00000
+vram_palette = $1fa00
+vram_sky_palette = $1fa20
+
+horizon = $c4
 
 .segment "DATA"
 
 next_line_lo:		.res 1
 next_line_hi:		.res 1
 scale:				.res 1
+ticks:				.res 1
 
 .segment "CODE"
 
 main:
 
 	; set video mode
-	lda #%00110001		; l0 enabled
+	lda #%00110001		; l0 and l1 enabled
 	sta veradcvideo
 
 	; set the l0 tile mode	
@@ -49,20 +54,34 @@ main:
 					; bitmap mode - 0
 					; color depth (2-bits) - 2 (4bpp)
 	sta veral0config
+
+	; set the l1 tile mode	
+	lda #%00000110 	; height (2-bits) - 0 (32 tiles)
+					; width (2-bits) - 2 (128 tiles
+					; T256C - 0
+					; bitmap mode - 0
+					; color depth (2-bits) - 3 (4bpp)
 	sta veral1config
 
 	lda #(<(vram_tilebase >> 9) | (1 << 1) | 1)
 								;  height    |  width
 	sta veral0tilebase
-	sta veral1tilebase
+	; sta veral1tilebase
 
 	; set the tile map base address
 	lda #<(vram_mapbase >> 9)
 	sta veral0mapbase
 
 	; set the tile map base address
-	lda #<(vram_skybase >> 9)
-	sta veral1mapbase
+	; lda #<(vram_skybase >> 9)
+	; sta veral1mapbase
+
+	lda #(<(vram_skybase >> 9) | (1 << 1) | 0)
+								;  height    |  width
+	sta veral1tilebase
+
+	lda #$01
+	sta veral1hscrollhi
 
 	lda #1
 	ldx #8
@@ -116,13 +135,26 @@ main:
 	ldy #>vram_palette
 	jsr LOAD
 
+	lda #1
+	ldx #8
+	ldy #0
+	jsr SETLFS
+	lda #(end_skypalettefile-skypalettefile)
+	ldx #<skypalettefile
+	ldy #>skypalettefile
+	jsr SETNAM
+	lda #(^vram_sky_palette + 2)
+	ldx #<vram_sky_palette
+	ldy #>vram_sky_palette
+	jsr LOAD
+
 	lda #$3
 	sta veraien
 
-	lda #$05
+	lda #horizon
 	sta verairqlo
 
-	lda #horizon
+	lda #horizon + 4
 	sta next_line_lo
 	lda #$0
 	sta next_line_hi
@@ -200,9 +232,12 @@ handle_irq:
 ;==================================================
 raster_line:
 
+	; set video mode
+	lda #%00010001		; l0 enabled
+	sta veradcvideo
+
 	jsr set_scale
 
-	; lda raster_low,x
 	lda next_line_lo
 	sta verairqlo
 
@@ -213,12 +248,29 @@ raster_line:
 
 	sec
 	lda scale
-	sbc #1
+	sbc #2
 	sta scale
-	
+
+	inc veral0hscrolllo
+	inc veral0hscrolllo
+	inc veral0hscrolllo
+	inc veral0hscrolllo
+
+	sec
+	lda #128
+	sbc scale
+	lsr
+	lsr
+	lsr
+	sta u0L
+	cmp #4
+	bcs :+
+	lda #4
+	sta u0L
+:
 	clc
 	lda next_line_lo
-	adc #$04
+	adc u0L
 	sta next_line_lo
 	bcc @return
 	lda #$80
@@ -238,9 +290,9 @@ check_vsync:
 	
 	stz next_line_hi
 
-	lda #horizon
+	lda #horizon + 4
 	sta next_line_lo
-	lda #$04
+	lda #horizon
 	sta verairqlo
 
 	lda veraien
@@ -250,9 +302,18 @@ check_vsync:
 	lda #128
 	sta scale
 
+	lda #64
+	sta veradchscale
+	sta veradcvscale
+
 	stz veral0hscrolllo
+	stz veral1hscrolllo
 
 	jsr tick
+
+	; set video mode
+	lda #%00110001		; l0 and l1 enabled
+	sta veradcvideo
 
 @end:
 	stz zp_vsync_trig
@@ -285,9 +346,6 @@ set_scale:
 	sbc u0L
 	sta veradcvscale
 
-	inc veral0hscrolllo
-	inc veral0hscrolllo
-
 	; un-stash veractl
 	sty veractl
 
@@ -297,6 +355,10 @@ set_scale:
 ; tick
 ;==================================================
 tick:
+
+	lda ticks
+	lsr
+	bcc :+
 
 	; dec veral0vscrolllo	
 	lda veral0vscrolllo
@@ -309,10 +371,7 @@ tick:
 	dec veral0vscrollhi
 :
 
-	; inc veral0hscrolllo	
-	; bne :+
-	; inc veral0hscrollhi
-; :
+	inc ticks
 
 	rts
 
