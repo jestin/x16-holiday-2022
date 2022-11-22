@@ -49,7 +49,7 @@ main:
 	sta veradcvideo
 
 	; set the l0 tile mode	
-	lda #%00000010 	; height (2-bits) - 0 (32 tiles)
+	lda #%11000010 	; height (2-bits) - 0 (32 tiles)
 					; width (2-bits) - 0 (32 tiles
 					; T256C - 0
 					; bitmap mode - 0
@@ -374,7 +374,7 @@ tick:
 
 	lda vscroll
 	sec
-	sbc #4
+	sbc #2
 	sta vscroll
 	bcs :+
 	dec vscroll+1
