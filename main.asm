@@ -31,6 +31,7 @@ vram_palette = $1fa00
 vram_sky_palette = $1fa20
 
 horizon = $c4
+line_inc = 4
 
 .segment "DATA"
 
@@ -155,7 +156,7 @@ main:
 	lda #horizon
 	sta verairqlo
 
-	lda #horizon + 4
+	lda #horizon + line_inc
 	sta next_line_lo
 	lda #$0
 	sta next_line_hi
@@ -264,9 +265,9 @@ raster_line:
 	lsr
 	lsr
 	sta u0L
-	cmp #4
+	cmp #line_inc
 	bcs :+
-	lda #4
+	lda #line_inc
 	sta u0L
 :
 	clc
@@ -291,7 +292,7 @@ check_vsync:
 	
 	stz next_line_hi
 
-	lda #horizon + 4
+	lda #horizon + line_inc
 	sta next_line_lo
 	lda #horizon
 	sta verairqlo
