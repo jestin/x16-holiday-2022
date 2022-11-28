@@ -13,7 +13,9 @@ RESOURCES = TILES.BIN \
 			MAP.BIN \
 			PAL.BIN \
 			SKY.BIN \
-			SKYPAL.BIN
+			SKYPAL.BIN \
+			SLEIGH.BIN \
+			SLEIGHPAL.BIN
 
 all: $(PROG)
 
@@ -35,6 +37,12 @@ SKY.BIN: sky.xcf
 
 SKYPAL.BIN: SKY.BIN
 	cp SKY.BIN.PAL SKYPAL.BIN
+
+SLEIGH.BIN: sleigh.xcf
+	gimp -i -d -f -b '(export-vera "sleigh.xcf" "SLEIGH.BIN" 0 4 64 64 0 0 1)' -b '(gimp-quit 0)'
+
+SLEIGHPAL.BIN: SLEIGH.BIN
+	cp SLEIGH.BIN.PAL SLEIGHPAL.BIN
 
 resources: $(RESOURCES)
 

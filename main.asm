@@ -24,11 +24,19 @@ end_palettefile:
 skypalettefile: .literal "SKYPAL.BIN"
 end_skypalettefile:
 
+sleighfile: .literal "SLEIGH.BIN"
+end_sleighfile:
+
+slieghpalettefile: .literal "SLEIGHPAL.BIN"
+end_slieghpalettefile:
+
 vram_tilebase = $10000
-vram_mapbase = $17000
+vram_mapbase = $14000
 vram_skybase = $00000
+vram_sleigh_tiles = $18000
 vram_palette = $1fa00
 vram_sky_palette = $1fa20
+vram_sleigh_palette = $1fa40
 
 horizon = $c4
 line_inc = 4
@@ -40,50 +48,19 @@ next_line_hi:		.res 1
 scale:				.res 1
 ticks:				.res 1
 vscroll:			.res 2
+sleigh_x:			.res 1
+sleigh_y:			.res 1
 
 .segment "CODE"
 
 main:
 
 	; set video mode
-	lda #%00110001		; l0 and l1 enabled
+	lda #%00000001		; disable everything
 	sta veradcvideo
 
-	; set the l0 tile mode	
-	lda #%11000010 	; height (2-bits) - 0 (32 tiles)
-					; width (2-bits) - 0 (32 tiles
-					; T256C - 0
-					; bitmap mode - 0
-					; color depth (2-bits) - 2 (4bpp)
-	sta veral0config
-
-	; set the l1 tile mode	
-	lda #%00000110 	; height (2-bits) - 0 (32 tiles)
-					; width (2-bits) - 2 (128 tiles
-					; T256C - 0
-					; bitmap mode - 0
-					; color depth (2-bits) - 3 (4bpp)
-	sta veral1config
-
-	lda #(<(vram_tilebase >> 9) | (1 << 1) | 1)
-								;  height    |  width
-	sta veral0tilebase
-	; sta veral1tilebase
-
-	; set the tile map base address
-	lda #<(vram_mapbase >> 9)
-	sta veral0mapbase
-
-	; set the tile map base address
-	; lda #<(vram_skybase >> 9)
-	; sta veral1mapbase
-
-	lda #(<(vram_skybase >> 9) | (1 << 1) | 0)
-								;  height    |  width
-	sta veral1tilebase
-
-	lda #$01
-	sta veral1hscrollhi
+	;=============================================
+	; load resources into vram
 
 	lda #1
 	ldx #8
@@ -149,6 +126,97 @@ main:
 	ldx #<vram_sky_palette
 	ldy #>vram_sky_palette
 	jsr LOAD
+
+	lda #1
+	ldx #8
+	ldy #0
+	jsr SETLFS
+	lda #(end_sleighfile-sleighfile)
+	ldx #<sleighfile
+	ldy #>sleighfile
+	jsr SETNAM
+	lda #(^vram_sleigh_tiles + 2)
+	ldx #<vram_sleigh_tiles
+	ldy #>vram_sleigh_tiles
+	jsr LOAD
+
+	lda #1
+	ldx #8
+	ldy #0
+	jsr SETLFS
+	lda #(end_slieghpalettefile-slieghpalettefile)
+	ldx #<slieghpalettefile
+	ldy #>slieghpalettefile
+	jsr SETNAM
+	lda #(^vram_sleigh_palette + 2)
+	ldx #<vram_sleigh_palette
+	ldy #>vram_sleigh_palette
+	jsr LOAD
+
+	; set the l0 tile mode	
+	lda #%11000010 	; height (2-bits) - 0 (32 tiles)
+					; width (2-bits) - 0 (32 tiles
+					; T256C - 0
+					; bitmap mode - 0
+					; color depth (2-bits) - 2 (4bpp)
+	sta veral0config
+
+	; set the l1 tile mode	
+	lda #%00000110 	; height (2-bits) - 0 (32 tiles)
+					; width (2-bits) - 2 (128 tiles
+					; T256C - 0
+					; bitmap mode - 0
+					; color depth (2-bits) - 3 (4bpp)
+	sta veral1config
+
+	lda #(<(vram_tilebase >> 9) | (1 << 1) | 1)
+								;  height    |  width
+	sta veral0tilebase
+	; sta veral1tilebase
+
+	; set the tile map base address
+	lda #<(vram_mapbase >> 9)
+	sta veral0mapbase
+
+	; set the tile map base address
+	; lda #<(vram_skybase >> 9)
+	; sta veral1mapbase
+
+	lda #(<(vram_skybase >> 9) | (1 << 1) | 0)
+								;  height    |  width
+	sta veral1tilebase
+
+	lda #$01
+	sta veral1hscrollhi
+
+	;=============================================
+	; setup sleigh sprites
+
+	lda #128
+	sta sleigh_x
+	lda #32
+	sta sleigh_y
+
+	ldx #0
+	lda #<(vram_sleigh_tiles >> 5)
+	sprstore 0
+	lda #>(vram_sleigh_tiles >> 5) | %00000000 ; mode=0
+	sprstore 1
+	lda sleigh_x
+	sprstore 2
+	lda #0
+	sprstore 3
+	lda sleigh_y
+	sprstore 4
+	lda #0
+	sprstore 5
+	lda #%00001100	; Collision/Z-depth/vflip/hflip
+	sprstore 6
+	lda #%11110010	; Height/Width/Paloffset
+	sprstore 7
+
+	;=============================================
+	; set up raster line interrupts
 
 	lda #$3
 	sta veraien
@@ -235,7 +303,7 @@ handle_irq:
 raster_line:
 
 	; set video mode
-	lda #%00010001		; l0 enabled
+	lda #%01010001		; l0 and sprites enabled
 	sta veradcvideo
 
 	jsr set_scale
@@ -312,7 +380,7 @@ check_vsync:
 	stz veral1hscrolllo
 
 	; set video mode
-	lda #%00110001		; l0 and l1 enabled
+	lda #%01110001		; l0, l1, and sprites enabled
 	sta veradcvideo
 
 	jsr tick
@@ -385,9 +453,101 @@ tick:
 	lda vscroll+1
 	sta veral0vscrollhi
 
+	jsr set_sleigh_height
+
 	inc ticks
 
 	rts
 
+;==================================================
+; set_sleigh_height
+;==================================================
+set_sleigh_height:
+	lda ticks
 
+	cmp #16
+	bcs :+
+	lda #32
+	bra @store_sleigh_y
+:
+	cmp #32
+	bcs :+
+	lda #33
+	bra @store_sleigh_y
+:
+	cmp #48
+	bcs :+
+	lda #34
+	bra @store_sleigh_y
+:
+	cmp #64
+	bcs :+
+	lda #35
+	bra @store_sleigh_y
+:
+	cmp #80
+	bcs :+
+	lda #36
+	bra @store_sleigh_y
+:
+	cmp #96
+	bcs :+
+	lda #35
+	bra @store_sleigh_y
+:
+	cmp #112
+	bcs :+
+	lda #34
+	bra @store_sleigh_y
+:
+	cmp #128
+	bcs :+
+	lda #33
+	bra @store_sleigh_y
+:
+	cmp #144
+	bcs :+
+	lda #32
+	bra @store_sleigh_y
+:
+	cmp #160
+	bcs :+
+	lda #31
+	bra @store_sleigh_y
+:
+	cmp #176
+	bcs :+
+	lda #30
+	bra @store_sleigh_y
+:
+	cmp #192
+	bcs :+
+	lda #29
+	bra @store_sleigh_y
+:
+	cmp #208
+	bcs :+
+	lda #28
+	bra @store_sleigh_y
+:
+	cmp #224
+	bcs :+
+	lda #29
+	bra @store_sleigh_y
+:
+	cmp #240
+	bcs :+
+	lda #30
+	bra @store_sleigh_y
+:
+	lda #31
+
+@store_sleigh_y:
+	sta sleigh_y
+
+	ldx #0
+	sprstore 4
+
+
+	rts
 
