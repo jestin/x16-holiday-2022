@@ -27,16 +27,25 @@ end_skypalettefile:
 sleighfile: .literal "SLEIGH.BIN"
 end_sleighfile:
 
-slieghpalettefile: .literal "SLEIGHPAL.BIN"
-end_slieghpalettefile:
+sleighpalettefile: .literal "SLEIGHPAL.BIN"
+end_sleighpalettefile:
+
+deerfile: .literal "DEER.BIN"
+end_deerfile:
+
+deerpalettefile: .literal "DEERPAL.BIN"
+end_deerpalettefile:
 
 vram_tilebase = $10000
 vram_mapbase = $14000
 vram_skybase = $00000
 vram_sleigh_tiles = $18000
+vram_deer_tiles = $18800
+
 vram_palette = $1fa00
 vram_sky_palette = $1fa20
 vram_sleigh_palette = $1fa40
+vram_deer_palette = $1fa60
 
 horizon = $c4
 line_inc = 4
@@ -144,15 +153,41 @@ main:
 	ldx #8
 	ldy #0
 	jsr SETLFS
-	lda #(end_slieghpalettefile-slieghpalettefile)
-	ldx #<slieghpalettefile
-	ldy #>slieghpalettefile
+	lda #(end_sleighpalettefile-sleighpalettefile)
+	ldx #<sleighpalettefile
+	ldy #>sleighpalettefile
 	jsr SETNAM
 	lda #(^vram_sleigh_palette + 2)
 	ldx #<vram_sleigh_palette
 	ldy #>vram_sleigh_palette
 	jsr LOAD
 
+	lda #1
+	ldx #8
+	ldy #0
+	jsr SETLFS
+	lda #(end_deerfile-deerfile)
+	ldx #<deerfile
+	ldy #>deerfile
+	jsr SETNAM
+	lda #(^vram_deer_tiles + 2)
+	ldx #<vram_deer_tiles
+	ldy #>vram_deer_tiles
+	jsr LOAD
+
+	lda #1
+	ldx #8
+	ldy #0
+	jsr SETLFS
+	lda #(end_deerpalettefile-deerpalettefile)
+	ldx #<deerpalettefile
+	ldy #>deerpalettefile
+	jsr SETNAM
+	lda #(^vram_deer_palette + 2)
+	ldx #<vram_deer_palette
+	ldy #>vram_deer_palette
+	jsr LOAD
+	
 	; set the l0 tile mode	
 	lda #%11000010 	; height (2-bits) - 0 (32 tiles)
 					; width (2-bits) - 0 (32 tiles
@@ -213,6 +248,42 @@ main:
 	lda #%00001100	; Collision/Z-depth/vflip/hflip
 	sprstore 6
 	lda #%11110010	; Height/Width/Paloffset
+	sprstore 7
+
+	ldx #1
+	lda #<(vram_deer_tiles >> 5)
+	sprstore 0
+	lda #>(vram_deer_tiles >> 5) | %00000000 ; mode=0
+	sprstore 1
+	lda #126
+	sprstore 2
+	lda #0
+	sprstore 3
+	lda #24
+	sprstore 4
+	lda #0
+	sprstore 5
+	lda #%00001100	; Collision/Z-depth/vflip/hflip
+	sprstore 6
+	lda #%11100011	; Height/Width/Paloffset
+	sprstore 7
+
+	ldx #2
+	lda #<(vram_deer_tiles >> 5)
+	sprstore 0
+	lda #>(vram_deer_tiles >> 5) | %00000000 ; mode=0
+	sprstore 1
+	lda #162
+	sprstore 2
+	lda #0
+	sprstore 3
+	lda #24
+	sprstore 4
+	lda #0
+	sprstore 5
+	lda #%00001101	; Collision/Z-depth/vflip/hflip
+	sprstore 6
+	lda #%11100011	; Height/Width/Paloffset
 	sprstore 7
 
 	;=============================================
@@ -454,6 +525,7 @@ tick:
 	sta veral0vscrollhi
 
 	jsr set_sleigh_height
+	jsr set_deer_tile
 
 	inc ticks
 
@@ -548,6 +620,31 @@ set_sleigh_height:
 	ldx #0
 	sprstore 4
 
-
 	rts
 
+;==================================================
+; set_deer_tile
+;==================================================
+set_deer_tile:
+	lda ticks
+	lsr
+	lsr
+	lsr
+	lsr
+	and #%00000011
+	asl
+	asl
+	asl
+	asl
+	asl
+	clc
+	adc #<(vram_deer_tiles >> 5)
+
+	ldx #1
+	sprstore 0
+
+	eor #%00100000
+	ldx #2
+	sprstore 0
+
+	rts

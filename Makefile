@@ -15,7 +15,9 @@ RESOURCES = TILES.BIN \
 			SKY.BIN \
 			SKYPAL.BIN \
 			SLEIGH.BIN \
-			SLEIGHPAL.BIN
+			SLEIGHPAL.BIN \
+			DEER.BIN \
+			DEERPAL.BIN
 
 all: $(PROG)
 
@@ -44,6 +46,12 @@ SLEIGH.BIN: sleigh.xcf
 SLEIGHPAL.BIN: SLEIGH.BIN
 	cp SLEIGH.BIN.PAL SLEIGHPAL.BIN
 
+DEER.BIN: deer.xcf
+	gimp -i -d -f -b '(export-vera "deer.xcf" "DEER.BIN" 0 4 32 64 0 0 1)' -b '(gimp-quit 0)'
+
+DEERPAL.BIN: DEER.BIN
+	cp DEER.BIN.PAL DEERPAL.BIN
+
 resources: $(RESOURCES)
 
 $(PROG): $(SOURCES)
@@ -56,6 +64,6 @@ clean:
 	rm -f $(PROG) $(LIST)
 
 clean_resources:
-	rm -f $(RESOURCES)
+	rm -f $(RESOURCES) *.BIN.PAL
 	
 cleanall: clean clean_resources
