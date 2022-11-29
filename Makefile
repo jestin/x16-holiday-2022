@@ -1,6 +1,11 @@
 NAME = MODE7DEMO
 ASSEMBLER6502 = cl65
-ASFLAGS = -t cx16 -l $(NAME).list
+
+INCLUDEDIR = 3rdParty/include/
+LIBDIR = 3rdParty/lib/
+LIBS = zsound.lib
+
+ASFLAGS = -t cx16 -l $(NAME).list -L $(LIBDIR) --asm-include-dir $(INCLUDEDIR)
 
 PROG = $(NAME).PRG
 LIST = $(NAME).list
@@ -55,7 +60,7 @@ DEERPAL.BIN: DEER.BIN
 resources: $(RESOURCES)
 
 $(PROG): $(SOURCES)
-	$(ASSEMBLER6502) $(ASFLAGS) -o $(PROG) $(MAIN)
+	$(ASSEMBLER6502) $(ASFLAGS) -o $(PROG) $(MAIN) $(LIBS)
 
 run: all resources
 	x16emu -prg $(PROG) -run -scale 2 -debug

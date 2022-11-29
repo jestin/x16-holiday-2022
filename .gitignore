@@ -5,8 +5,6 @@
 *.bin
 *.BIN
 *.BIN.PAL
-*.zsm
-*.ZSM
 *.list
 *.zip
 *.img

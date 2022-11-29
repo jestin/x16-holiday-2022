@@ -1,6 +1,9 @@
 .include "x16.inc"
 .include "vera.inc"
 
+; 3rd party includes
+.include "zsmplayer.inc"
+
 .segment "ONCE"
 .segment "STARTUP"
 
@@ -36,6 +39,9 @@ end_deerfile:
 deerpalettefile: .literal "DEERPAL.BIN"
 end_deerpalettefile:
 
+musicfile: .literal "CAROLV1.ZSM"
+end_musicfile:
+
 vram_tilebase = $10000
 vram_mapbase = $14000
 vram_skybase = $00000
@@ -46,6 +52,9 @@ vram_palette = $1fa00
 vram_sky_palette = $1fa20
 vram_sleigh_palette = $1fa40
 vram_deer_palette = $1fa60
+
+hi_mem = $a000
+bank_music = 1
 
 horizon = $c4
 line_inc = 4
@@ -187,6 +196,33 @@ main:
 	ldx #<vram_deer_palette
 	ldy #>vram_deer_palette
 	jsr LOAD
+
+	; load music
+
+	
+	lda #0			; set ROM bank to KERNAL
+	sta $01
+
+	; overworld
+	lda #bank_music
+	sta 0
+	lda #1
+	ldx #8
+	ldy #2
+	jsr SETLFS
+	lda #(end_musicfile-musicfile)
+	ldx #<musicfile
+	ldy #>musicfile
+	jsr SETNAM
+	lda #0
+	ldx #<hi_mem
+	ldy #>hi_mem
+	jsr LOAD
+
+	lda #bank_music
+	ldx #<hi_mem
+	ldy #>hi_mem
+	jsr startmusic
 	
 	; set the l0 tile mode	
 	lda #%11000010 	; height (2-bits) - 0 (32 tiles)
@@ -526,6 +562,7 @@ tick:
 
 	jsr set_sleigh_height
 	jsr set_deer_tile
+	jsr playmusic
 
 	inc ticks
 
