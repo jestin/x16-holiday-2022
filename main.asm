@@ -219,6 +219,8 @@ main:
 	ldy #>hi_mem
 	jsr LOAD
 
+	jsr init_player
+
 	lda #bank_music
 	ldx #<hi_mem
 	ldy #>hi_mem
