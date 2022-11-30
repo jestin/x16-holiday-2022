@@ -39,7 +39,7 @@ end_deerfile:
 deerpalettefile: .literal "DEERPAL.BIN"
 end_deerpalettefile:
 
-musicfile: .literal "CAROLV1.ZSM"
+musicfile: .literal "CAROLV1R41.ZSM"
 end_musicfile:
 
 vram_tilebase = $10000
