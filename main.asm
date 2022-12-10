@@ -49,9 +49,9 @@ vram_sleigh_tiles = $18000
 vram_deer_tiles = $18800
 
 vram_palette = $1fa00
-vram_sky_palette = $1fa20
-vram_sleigh_palette = $1fa40
-vram_deer_palette = $1fa60
+vram_sky_palette = $1fa40
+vram_sleigh_palette = $1fa60
+vram_deer_palette = $1fa80
 
 hi_mem = $a000
 bank_music = 1
@@ -76,6 +76,10 @@ main:
 	; set video mode
 	lda #%00000001		; disable everything
 	sta veradcvideo
+
+	; start at streets
+	; lda #$f6
+	; sta vscroll+1
 
 	;=============================================
 	; load resources into vram
@@ -259,7 +263,7 @@ main:
 								;  height    |  width
 	sta veral1tilebase
 
-	lda #$01
+	lda #$02
 	sta veral1hscrollhi
 
 	;=============================================
@@ -285,7 +289,7 @@ main:
 	sprstore 5
 	lda #%00001100	; Collision/Z-depth/vflip/hflip
 	sprstore 6
-	lda #%11110010	; Height/Width/Paloffset
+	lda #%11110011	; Height/Width/Paloffset
 	sprstore 7
 
 	ldx #1
@@ -303,7 +307,7 @@ main:
 	sprstore 5
 	lda #%00001100	; Collision/Z-depth/vflip/hflip
 	sprstore 6
-	lda #%11100011	; Height/Width/Paloffset
+	lda #%11100100	; Height/Width/Paloffset
 	sprstore 7
 
 	ldx #2
@@ -321,7 +325,7 @@ main:
 	sprstore 5
 	lda #%00001101	; Collision/Z-depth/vflip/hflip
 	sprstore 6
-	lda #%11100011	; Height/Width/Paloffset
+	lda #%11100100	; Height/Width/Paloffset
 	sprstore 7
 
 	;=============================================
