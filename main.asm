@@ -42,7 +42,7 @@ end_deerpalettefile:
 musicfile: .literal "CAROLV1R41.ZSM"
 end_musicfile:
 
-vram_tilebase = $10000
+vram_tilebase = $0e000
 vram_mapbase = $14000
 vram_skybase = $00000
 vram_sleigh_tiles = $18000
@@ -77,9 +77,10 @@ main:
 	lda #%00000001		; disable everything
 	sta veradcvideo
 
-	; start at streets
-	; lda #$f6
-	; sta vscroll+1
+	
+	lda #$ee ; start at terrain
+	; lda #$f6 ; start at streets
+	sta vscroll+1
 
 	;=============================================
 	; load resources into vram

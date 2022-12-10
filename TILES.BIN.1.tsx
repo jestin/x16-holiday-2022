@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.8" tiledversion="1.8.2" name="/home/jestin/Projects/x16-mode-7/TILES.BIN.1" tilewidth="16" tileheight="16" tilecount="128" columns="8">
- <image source="TILES.BIN.1.bmp" trans="000000" width="128" height="256"/>
+<tileset version="1.8" tiledversion="1.8.2" name="/home/jestin/Projects/x16-mode-7/TILES.BIN.1" tilewidth="16" tileheight="16" tilecount="160" columns="8">
+ <image source="TILES.BIN.1.bmp" trans="000000" width="128" height="320"/>
  <wangsets>
   <wangset name="City" type="mixed" tile="-1">
    <wangcolor name="snow" color="#ff0000" tile="-1" probability="1"/>
