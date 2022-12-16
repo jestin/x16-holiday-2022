@@ -78,7 +78,7 @@ main:
 	sta veradcvideo
 
 	
-	lda #$ee ; start at terrain
+	lda #$0e ; start at terrain
 	; lda #$f6 ; start at streets
 	sta vscroll+1
 
@@ -572,7 +572,14 @@ tick:
 	jsr set_deer_tile
 	jsr playmusic
 
-	bcc :+
+	; check for the start of the terrain again and then restart the music
+	lda vscroll+1
+	and #$0f
+	cmp #$0e
+	bne :+
+
+	lda vscroll
+	bne :+
 
 	; play music again if at the end
 	lda #bank_music
