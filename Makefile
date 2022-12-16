@@ -1,5 +1,6 @@
 NAME = HOLIDAY2022
 ASSEMBLER6502 = cl65
+TITLE = Jestins_2022_Holdiday_Demo
 
 INCLUDEDIR = 3rdParty/include/
 LIBDIR = 3rdParty/lib/
@@ -9,6 +10,8 @@ ASFLAGS = -t cx16 -l $(NAME).list -L $(LIBDIR) --asm-include-dir $(INCLUDEDIR)
 
 PROG = $(NAME).PRG
 LIST = $(NAME).list
+ZIPFILE = $(TITLE).zip
+
 MAIN = main.asm
 SOURCES = $(MAIN) \
 		  x16.inc \
@@ -24,7 +27,7 @@ RESOURCES = TILES.BIN \
 			DEER.BIN \
 			DEERPAL.BIN
 
-all: $(PROG)
+all: clean bin/$(PROG)
 
 
 TILES.BIN: tiles.xcf
@@ -58,17 +61,31 @@ DEERPAL.BIN: DEER.BIN
 	cp DEER.BIN.PAL DEERPAL.BIN
 
 resources: $(RESOURCES)
+	cp *.BIN bin 2> /dev/null
+	cp *.ZSM bin 2> /dev/null
 
-$(PROG): $(SOURCES)
-	$(ASSEMBLER6502) $(ASFLAGS) -o $(PROG) $(MAIN) $(LIBS)
+bin/$(PROG): $(SOURCES) bin
+	$(ASSEMBLER6502) $(ASFLAGS) -o bin/$(PROG) $(MAIN) $(LIBS)
+
+$(ZIPFILE): all resources clean_zip
+	(cd bin; zip ../$(ZIPFILE) *)
+
+zip: $(ZIPFILE)
 
 run: all resources
-	x16emu -prg $(PROG) -run -scale 2 -debug
+	(cd bin; x16emu -prg $(PROG) -run -scale 2 -debug)
 
 clean:
-	rm -f $(PROG) $(LIST)
+	rm  -f bin/$(PROG) $(LIST)
 
 clean_resources:
 	rm -f $(RESOURCES) *.BIN.PAL
+
+clean_zip:
+	rm -f $(ZIPFILE)
 	
 cleanall: clean clean_resources
+	rm -rf bin
+
+bin:
+	mkdir ./bin
