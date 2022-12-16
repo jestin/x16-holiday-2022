@@ -439,6 +439,7 @@ raster_line:
 	inc veral0hscrolllo
 	inc veral0hscrolllo
 	inc veral0hscrolllo
+	inc veral0hscrolllo
 
 	sec
 	lda #128
@@ -571,6 +572,15 @@ tick:
 	jsr set_deer_tile
 	jsr playmusic
 
+	bcc :+
+
+	; play music again if at the end
+	lda #bank_music
+	ldx #<hi_mem
+	ldy #>hi_mem
+	jsr startmusic
+
+:
 	inc ticks
 
 	rts
