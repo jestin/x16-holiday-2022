@@ -329,6 +329,8 @@ main:
 	lda #%11100100	; Height/Width/Paloffset
 	sprstore 7
 
+	jsr init_irq
+
 	;=============================================
 	; set up raster line interrupts
 
@@ -347,8 +349,6 @@ main:
 	and #$7f
 	ora #0
 	sta veraien
-
-	jsr init_irq
 
 ;==================================================
 ; mainloop
