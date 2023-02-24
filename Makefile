@@ -63,9 +63,21 @@ DEERPAL.BIN: DEER.BIN
 resources: $(RESOURCES)
 	cp *.BIN bin 2> /dev/null
 	cp *.ZSM bin 2> /dev/null
+	cp AUTOBOOT.X16 bin 2> /dev/null
 
 bin/$(PROG): $(SOURCES) bin
 	$(ASSEMBLER6502) $(ASFLAGS) -o bin/$(PROG) $(MAIN) $(LIBS)
+
+card.img: all resources clean_card
+	truncate -s 100M card.img
+	parted -s card.img mklabel msdos mkpart primary fat32 2048s -- -1
+	mformat -i card.img@@1M -F
+	mcopy -i card.img@@1M -o -m bin/* ::
+
+card: card.img
+
+run_card: card
+	x16emu -sdcard card.img -scale 2 -ram 512 -abufs 64
 
 $(ZIPFILE): all resources clean_zip
 	(cd bin; zip ../$(ZIPFILE) *)
@@ -83,6 +95,9 @@ clean_resources:
 
 clean_zip:
 	rm -f $(ZIPFILE)
+
+clean_card:
+	rm -f card.img
 	
 cleanall: clean clean_resources
 	rm -rf bin

@@ -8,6 +8,7 @@
 *.list
 *.zip
 *.img
+*.img.gz
 
 # symbolic link to emulator
 x16emu
