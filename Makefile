@@ -80,7 +80,7 @@ run_card: card
 	x16emu -sdcard card.img -scale 2 -ram 512 -abufs 64
 
 $(ZIPFILE): all resources clean_zip
-	(cd bin; zip ../$(ZIPFILE) *)
+	(cd bin; zip ../$(ZIPFILE) ../manifest.json *)
 
 zip: $(ZIPFILE)
 

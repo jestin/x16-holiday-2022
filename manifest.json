@@ -1,0 +1,23 @@
+{
+	"manifest_version": "1.0.0",
+	"name": "Jestin's 2022 Holiday Demo",
+	"author": "Jestin Stoffel",
+	"app_version": "1.0.0",
+	"license": "TBD",
+	"start_prg": "HOLIDAY2022.PRG",
+	"resources": [
+		"AUTOBOOT.X16",
+		"CAROLV1R41.ZSM",
+		"CAROLV1.ZSM",
+		"DEER.BIN",
+		"DEERPAL.BIN",
+		"HOLIDAY2022.PRG",
+		"MAP.BIN",
+		"PAL.BIN",
+		"SKY.BIN",
+		"SKYPAL.BIN",
+		"SLEIGH.BIN",
+		"SLEIGHPAL.BIN",
+		"TILES.BIN"
+	]
+}
