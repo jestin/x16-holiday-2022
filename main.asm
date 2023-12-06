@@ -68,6 +68,7 @@ ticks:				.res 1
 vscroll:			.res 2
 sleigh_x:			.res 1
 sleigh_y:			.res 1
+phase:				.res 1
 
 .segment "CODE"
 
@@ -350,6 +351,8 @@ main:
 	ora #0
 	sta veraien
 
+	stz phase
+
 ;==================================================
 ; mainloop
 ;==================================================
@@ -390,8 +393,15 @@ handle_irq:
 	; acknowledge line IRQ
 	sta veraisr
 
-	jsr raster_line
-
+	lda phase
+	bne :+
+	jsr raster_line_phase_1
+	inc phase
+	bra :++
+:
+	jsr raster_line_phase_2
+	stz phase
+:
 	; return from the IRQ manually
 	ply
 	plx
@@ -410,17 +420,46 @@ handle_irq:
 
 @end:
 	jmp (default_irq)
+;==================================================
+; raster_line_phase_1
+;==================================================
+raster_line_phase_1:
+
+	jsr set_scale
+
+	lda next_line_lo
+	sta verairqlo
+
+	lda veraien
+	and #$7f
+	ora next_line_hi
+	sta veraien
+
+	clc
+	lda next_line_lo
+	adc #1
+	sta next_line_lo
+	bcc @return
+	lda #$80
+	sta next_line_hi
+
+@return:
+	rts
 
 ;==================================================
-; raster_line
+; raster_line_phase_2
 ;==================================================
-raster_line:
+raster_line_phase_2:
 
 	; set video mode
 	lda #%01010001		; l0 and sprites enabled
 	sta veradcvideo
 
-	jsr set_scale
+	inc veral0hscrolllo
+	inc veral0hscrolllo
+	inc veral0hscrolllo
+	inc veral0hscrolllo
+	inc veral0hscrolllo
 
 	lda next_line_lo
 	sta verairqlo
@@ -434,12 +473,6 @@ raster_line:
 	lda scale
 	sbc #2
 	sta scale
-
-	inc veral0hscrolllo
-	inc veral0hscrolllo
-	inc veral0hscrolllo
-	inc veral0hscrolllo
-	inc veral0hscrolllo
 
 	sec
 	lda #128
@@ -553,6 +586,7 @@ set_scale:
 tick:
 
 	lda ticks
+	stz phase
 	lsr
 	bcc :+
 
